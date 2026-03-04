@@ -1,0 +1,115 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,400;1,600;1,700&family=Outfit:wght@300;400;600;700;800&family=Playfair+Display:ital,wght@1,400;1,700;1,900&display=swap');
+
+@theme {
+  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-serif-italic: "Playfair Display", serif;
+  
+  --color-navy: #0a1628;
+  --color-navy-dark: #082032;
+  --color-aqua: #00c2cb;
+  --color-cyan-pool: #3dd9eb;
+  --color-foam: #f0f8ff;
+  --color-off-white: #f5f2ee;
+  --color-stone: #c8bfb0;
+}
+
+:root {
+  --bg: var(--color-off-white);
+  --text: var(--color-navy);
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+  font-family: var(--font-sans);
+}
+
+.serif-italic {
+  font-family: var(--font-serif-italic);
+  font-style: italic;
+}
+
+/* Lenis recommended CSS */
+html.lenis, html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-scrolling iframe {
+  pointer-events: none;
+}
+
+/* Custom Cursor Styles */
+#custom-cursor-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.image-trail-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 50;
+}
+
+.trail-image {
+  position: absolute;
+  width: 150px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 8px;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Mask Reveal Classes */
+.mask-reveal {
+  clip-path: inset(100% 0 0 0);
+}
+
+/* Stacking Cards */
+.stack-card {
+  position: sticky;
+  top: 10vh;
+}
+
+/* Marquee */
+.marquee-container {
+  overflow: hidden;
+  white-space: nowrap;
+  display: flex;
+}
+
+.marquee-content {
+  display: flex;
+  flex-shrink: 0;
+}
+
+/* Blur Reveal */
+.blur-reveal span {
+  display: inline-block;
+  filter: blur(10px);
+  opacity: 0;
+}
