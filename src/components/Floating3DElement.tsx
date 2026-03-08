@@ -111,37 +111,37 @@ export const Floating3DElement = ({
   className = "",
 }: Floating3DElementProps) => {
   const [isMobile, setIsMobile] = useState(false);
-  const [isInView, setIsInView] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
     window.addEventListener("resize", checkMobile);
     
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setIsInView(entry.isIntersecting);
-      },
-      { rootMargin: "200px" }
-    );
-    
-    const triggerEl = document.querySelector(trigger);
-    if (triggerEl) observer.observe(triggerEl);
-
     return () => {
       window.removeEventListener("resize", checkMobile);
-      if (triggerEl) observer.unobserve(triggerEl);
     };
-  }, [trigger]);
-
-  if (!isInView) return null;
+  }, []);
 
   return (
     <div className={`fixed inset-0 pointer-events-none z-[15] ${className}`}>
       <Canvas
         camera={{ position: [0, 0, 10], fov: isMobile ? 45 : 35 }}
-        gl={{ antialias: !isMobile, alpha: true, powerPreference: "high-performance" }}
-        dpr={isMobile ? 1 : [1, 2]}
+        gl={{ antialias: false, alpha: true, powerPreference: "high-performance" }}
+        dpr={1}
+        onCreated={({ gl, scene }) => {
+          scene.traverse((child) => {
+            if ((child as THREE.Mesh).isMesh) {
+              const mesh = child as THREE.Mesh;
+              if (mesh.material) {
+                if (Array.isArray(mesh.material)) {
+                  mesh.material.forEach((m: any) => { m.dithering = false; });
+                } else {
+                  (mesh.material as any).dithering = false;
+                }
+              }
+            }
+          });
+        }}
       >
         <ambientLight intensity={0.7} />
         <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1.5} />

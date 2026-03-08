@@ -13,13 +13,27 @@ export const MaskContainer = ({
   const [mousePosition, setMousePosition] = useState<any>({ x: null, y: null })
   const containerRef = useRef<any>(null)
 
+  const requestRef = useRef<number | null>(null)
+  const lastMousePos = useRef({ x: 0, y: 0 })
+
   const updateMousePosition = (e: any) => {
     const rect = containerRef.current.getBoundingClientRect()
-    setMousePosition({ x: e.clientX - rect.left, y: e.clientY - rect.top })
+    lastMousePos.current = { x: e.clientX - rect.left, y: e.clientY - rect.top }
+    
+    if (requestRef.current === null) {
+      requestRef.current = requestAnimationFrame(() => {
+        setMousePosition(lastMousePos.current)
+        requestRef.current = null
+      })
+    }
   }
 
   useEffect(() => {
-    // No-op, using onMouseMove on the div
+    return () => {
+      if (requestRef.current !== null) {
+        cancelAnimationFrame(requestRef.current)
+      }
+    }
   }, [])
 
   const maskSize = isHovered ? revealSize : size

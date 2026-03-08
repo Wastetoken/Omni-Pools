@@ -88,11 +88,11 @@ export default function App() {
   useEffect(() => {
     // Initialize Lenis
     const lenis = new Lenis({
-      duration: 0.8,
+      duration: 1.0,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       lerp: 0.1,
       wheelMultiplier: 1,
-      touchMultiplier: 1.2,
+      touchMultiplier: 1.5,
       infinite: false,
     });
 
@@ -108,18 +108,11 @@ export default function App() {
     const marquee = document.querySelector('.marquee-content');
     if (marquee) {
       const marqueeWidth = marquee.clientWidth;
-      const tl = gsap.to('.marquee-content', {
+      gsap.to('.marquee-content', {
         x: -marqueeWidth / 2,
         duration: 20,
         ease: 'none',
         repeat: -1,
-      });
-
-      ScrollTrigger.create({
-        onUpdate: (self) => {
-          const velocity = Math.abs(self.getVelocity());
-          gsap.to(tl, { timeScale: 1 + velocity / 500, duration: 0.5 });
-        }
       });
     }
 
@@ -128,6 +121,7 @@ export default function App() {
       width: '100vw',
       height: '100vh',
       borderRadius: '0px',
+      ease: 'none',
       scrollTrigger: {
         trigger: '.expand-section',
         start: 'top bottom',
@@ -176,13 +170,15 @@ export default function App() {
 
       {/* Hero Section - Parallax */}
       <section className="relative overflow-hidden bg-navy will-change-transform">
-        <LiquidRipple videoUrl="https://pub-5a76c67414e24796a5bd7ac87486acd0.r2.dev/5470803-hd_1920_1080_30fps.mp4" />
-        <div className="absolute inset-0 bg-navy/30 z-[6] pointer-events-none" /> {/* Subtle overlay for text readability */}
-        <HeroParallax 
-          products={PRODUCTS} 
-          title="Omni Pools" 
-          subtitle="San Diego's Premier Pool Service. Weekly Maintenance, Chemical Balancing, and Expert Repairs."
-        />
+        <LiquidRipple imageUrl={IMAGES[0]} />
+        <div className="absolute inset-0 bg-navy/30 z-[1] pointer-events-none" /> {/* Subtle overlay for text readability */}
+        <div className="relative z-10">
+          <HeroParallax 
+            products={PRODUCTS} 
+            title="Omni Pools" 
+            subtitle="San Diego's Premier Pool Service. Weekly Maintenance, Chemical Balancing, and Expert Repairs."
+          />
+        </div>
       </section>
 
       {/* 3D Floating Elements - Staggered throughout the scroll */}

@@ -58,7 +58,7 @@ export default function Skiper3dCarousel({
             return (
               <motion.div
                 key={index}
-                className="absolute left-1/2 top-1/2 h-[300px] w-[240px] cursor-pointer rounded-3xl border border-white/10 p-6 shadow-2xl overflow-hidden bg-navy/80 backdrop-blur-sm"
+                className="absolute left-1/2 top-1/2 h-[300px] w-[240px] cursor-pointer rounded-3xl border border-white/10 p-6 shadow-2xl overflow-hidden bg-navy/80 backdrop-blur-sm will-change-transform"
                 style={{
                   marginLeft: -120,
                   marginTop: -150,

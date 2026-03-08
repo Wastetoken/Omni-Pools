@@ -220,28 +220,29 @@ export const LiquidRipple = ({ imageUrl, videoUrl }: { imageUrl?: string; videoU
     }
 
     const TX = 1.0 / SW, TY = 1.0 / SH;
-    let isVisible = true;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        isVisible = entry.isIntersecting;
-      },
-      { threshold: 0 }
-    );
-    observer.observe(canvas);
-
     let mX = -1, mY = -1, moved = false, held = false;
+    let requestRef: number;
 
     function setPos(clientX: number, clientY: number) {
-      const nx = clientX / window.innerWidth;
-      const ny = 1.0 - clientY / window.innerHeight;
-      if (Math.abs(nx - mX) > 0.001 || Math.abs(ny - mY) > 0.001) moved = true;
-      mX = nx; mY = ny;
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      // Calculate position relative to the canvas
+      const nx = (clientX - rect.left) / rect.width;
+      const ny = 1.0 - (clientY - rect.top) / rect.height;
+      
+      if (nx >= 0 && nx <= 1 && ny >= 0 && ny <= 1) {
+        if (Math.abs(nx - mX) > 0.001 || Math.abs(ny - mY) > 0.001) moved = true;
+        mX = nx; mY = ny;
+      }
     }
 
     const onMove = (e: MouseEvent) => {
       setPos(e.clientX, e.clientY);
     };
-    const onDown = () => (held = true);
+    const onDown = (e: MouseEvent) => {
+      held = true;
+      setPos(e.clientX, e.clientY);
+    };
     const onUp = () => (held = false);
     const onTouchStart = (e: TouchEvent) => {
       held = true;
@@ -250,8 +251,6 @@ export const LiquidRipple = ({ imageUrl, videoUrl }: { imageUrl?: string; videoU
     const onTouchMove = (e: TouchEvent) => setPos(e.touches[0].clientX, e.touches[0].clientY);
     const onTouchEnd = () => {
       held = false;
-      mX = -1;
-      mY = -1;
     };
 
     window.addEventListener("mousemove", onMove);
@@ -262,7 +261,9 @@ export const LiquidRipple = ({ imageUrl, videoUrl }: { imageUrl?: string; videoU
     window.addEventListener("touchend", onTouchEnd, { passive: true });
 
     const resize = () => {
+      if (!canvas) return;
       const rect = canvas.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return;
       canvas.width = rect.width;
       canvas.height = rect.height;
     };
@@ -272,68 +273,92 @@ export const LiquidRipple = ({ imageUrl, videoUrl }: { imageUrl?: string; videoU
     const t0 = performance.now();
     
     const render = (time: number) => {
-      if (!bgReady || !isVisible) return;
+      if (!gl || !canvas) return;
 
-      const t = (time - t0) / 1000.0;
+      if (!bgReady && video && video.readyState >= 2) {
+        bgReady = true;
+      }
+      
+      if (bgReady) {
+        const t = (time - t0) / 1000.0;
 
-      if (video && video.readyState >= video.HAVE_CURRENT_DATA) {
+        if (video && video.readyState >= video.HAVE_CURRENT_DATA) {
+          gl.bindTexture(gl.TEXTURE_2D, bgTex);
+          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, video);
+        }
+
+        // Pass A - simulate
+        gl.viewport(0, 0, SW, SH);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, fboB);
+        gl.useProgram(simProg);
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, texA);
+        gl.uniform1i(S.state, 0);
+        gl.uniform2f(S.texel, TX, TY);
+        gl.uniform2f(S.mouse, mX, mY);
+        gl.uniform1f(S.time, t);
+        // Trigger impulse on move OR hold
+        gl.uniform1f(S.imp, (moved || held) && mX >= 0 ? 1.0 : 0.0);
+        moved = false;
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, quad);
+        gl.enableVertexAttribArray(S.aPos);
+        gl.vertexAttribPointer(S.aPos, 2, gl.FLOAT, false, 0, 0);
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+        // Swap
+        let tmpTex = texA; texA = texB; texB = tmpTex;
+        let tmpFbo = fboA; fboA = fboB; fboB = tmpFbo;
+
+        // Pass B - render
+        gl.viewport(0, 0, canvas.width, canvas.height);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        gl.enable(gl.BLEND);
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+        gl.clearColor(0, 0, 0, 0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+
+        gl.useProgram(rndProg);
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, texA);
+        gl.uniform1i(R.wave, 0);
+        
+        gl.activeTexture(gl.TEXTURE1);
         gl.bindTexture(gl.TEXTURE_2D, bgTex);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, video);
+        gl.uniform1i(R.bg, 1);
+
+        gl.uniform2f(R.texel, TX, TY);
+        gl.uniform1f(R.time, t);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, quad);
+        gl.enableVertexAttribArray(R.aPos);
+        gl.vertexAttribPointer(R.aPos, 2, gl.FLOAT, false, 0, 0);
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
       }
 
-      // Pass A - simulate
-      gl.viewport(0, 0, SW, SH);
-      gl.bindFramebuffer(gl.FRAMEBUFFER, fboB);
-      gl.useProgram(simProg);
-      gl.activeTexture(gl.TEXTURE0);
-      gl.bindTexture(gl.TEXTURE_2D, texA);
-      gl.uniform1i(S.state, 0);
-      gl.uniform2f(S.texel, TX, TY);
-      gl.uniform2f(S.mouse, mX, mY);
-      gl.uniform1f(S.time, t);
-      gl.uniform1f(S.imp, (held && mX >= 0) ? 1.0 : 0.0);
-      moved = false;
-
-      gl.bindBuffer(gl.ARRAY_BUFFER, quad);
-      gl.enableVertexAttribArray(S.aPos);
-      gl.vertexAttribPointer(S.aPos, 2, gl.FLOAT, false, 0, 0);
-      gl.drawArrays(gl.TRIANGLES, 0, 6);
-
-      // Swap
-      let tmpTex = texA; texA = texB; texB = tmpTex;
-      let tmpFbo = fboA; fboA = fboB; fboB = tmpFbo;
-
-      // Pass B - render
-      gl.viewport(0, 0, canvas.width, canvas.height);
-      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-      gl.enable(gl.BLEND);
-      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-      gl.clearColor(0, 0, 0, 0);
-      gl.clear(gl.COLOR_BUFFER_BIT);
-
-      gl.useProgram(rndProg);
-      gl.activeTexture(gl.TEXTURE0);
-      gl.bindTexture(gl.TEXTURE_2D, texA);
-      gl.uniform1i(R.wave, 0);
-      
-      gl.activeTexture(gl.TEXTURE1);
-      gl.bindTexture(gl.TEXTURE_2D, bgTex);
-      gl.uniform1i(R.bg, 1);
-
-      gl.uniform2f(R.texel, TX, TY);
-      gl.uniform1f(R.time, t);
-
-      gl.bindBuffer(gl.ARRAY_BUFFER, quad);
-      gl.enableVertexAttribArray(R.aPos);
-      gl.vertexAttribPointer(R.aPos, 2, gl.FLOAT, false, 0, 0);
-      gl.drawArrays(gl.TRIANGLES, 0, 6);
+      requestRef = requestAnimationFrame(render);
     };
 
-    // Use GSAP ticker for synchronized rendering
-    gsap.ticker.add(render);
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          if (!requestRef) {
+            requestRef = requestAnimationFrame(render);
+          }
+        } else {
+          if (requestRef) {
+            cancelAnimationFrame(requestRef);
+            requestRef = 0;
+          }
+        }
+      },
+      { threshold: 0.01 }
+    );
+    observer.observe(canvas);
 
     return () => {
       observer.disconnect();
+      if (requestRef) cancelAnimationFrame(requestRef);
       if (video) {
         if (playPromise !== null) {
           playPromise.then(() => {
@@ -345,7 +370,6 @@ export const LiquidRipple = ({ imageUrl, videoUrl }: { imageUrl?: string; videoU
         video.src = "";
         video.load();
       }
-      gsap.ticker.remove(render);
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("mousedown", onDown);
       window.removeEventListener("mouseup", onUp);
@@ -359,7 +383,7 @@ export const LiquidRipple = ({ imageUrl, videoUrl }: { imageUrl?: string; videoU
   return (
     <canvas
       ref={canvasRef}
-      className="absolute inset-0 pointer-events-none z-[5]"
+      className="absolute inset-0 pointer-events-none z-0"
       style={{ display: "block", width: "100%", height: "100%", objectFit: "cover" }}
     />
   );

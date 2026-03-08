@@ -22,48 +22,54 @@ export const ImageCursorTrail = () => {
     const container = containerRef.current;
     if (!container) return;
 
+    let rafId: number;
     const handleMove = (e: MouseEvent | TouchEvent) => {
-      const rect = container.getBoundingClientRect();
-      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-      const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
-
-      // Only trigger if mouse is within the container bounds
-      if (
-        clientX < rect.left ||
-        clientX > rect.right ||
-        clientY < rect.top ||
-        clientY > rect.bottom
-      ) {
-        return;
-      }
-
-      const x = clientX - rect.left;
-      const y = clientY - rect.top;
-      const dist = Math.hypot(clientX - lastMousePos.current.x, clientY - lastMousePos.current.y);
+      if (rafId) return;
       
-      if (dist > 100) {
-        const img = imagesRef.current[currentIndex.current];
-        if (img) {
-          gsap.set(img, {
-            x: x,
-            y: y,
-            opacity: 1,
-            scale: 1,
-            rotation: Math.random() * 20 - 10,
-          });
+      rafId = requestAnimationFrame(() => {
+        rafId = 0;
+        const rect = container.getBoundingClientRect();
+        const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+        const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
 
-          gsap.to(img, {
-            opacity: 0,
-            scale: 0.5,
-            duration: 1,
-            ease: 'power2.out',
-            overwrite: true,
-          });
-
-          currentIndex.current = (currentIndex.current + 1) % TRAIL_IMAGES.length;
-          lastMousePos.current = { x: clientX, y: clientY };
+        // Only trigger if mouse is within the container bounds
+        if (
+          clientX < rect.left ||
+          clientX > rect.right ||
+          clientY < rect.top ||
+          clientY > rect.bottom
+        ) {
+          return;
         }
-      }
+
+        const x = clientX - rect.left;
+        const y = clientY - rect.top;
+        const dist = Math.hypot(clientX - lastMousePos.current.x, clientY - lastMousePos.current.y);
+        
+        if (dist > 100) {
+          const img = imagesRef.current[currentIndex.current];
+          if (img) {
+            gsap.set(img, {
+              x: x,
+              y: y,
+              opacity: 1,
+              scale: 1,
+              rotation: Math.random() * 20 - 10,
+            });
+
+            gsap.to(img, {
+              opacity: 0,
+              scale: 0.5,
+              duration: 1,
+              ease: 'power2.out',
+              overwrite: true,
+            });
+
+            currentIndex.current = (currentIndex.current + 1) % TRAIL_IMAGES.length;
+            lastMousePos.current = { x: clientX, y: clientY };
+          }
+        }
+      });
     };
 
     window.addEventListener('mousemove', handleMove);

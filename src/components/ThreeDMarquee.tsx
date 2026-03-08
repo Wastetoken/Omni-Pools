@@ -16,7 +16,12 @@ export const ThreeDMarquee = ({ images, className }: { images: string[]; classNa
         <div className="size-[1720px] shrink-0 scale-50 sm:scale-75 lg:scale-100">
           <div style={{ transform: "rotateX(55deg) rotateY(0deg) rotateZ(-45deg)" }} className="relative top-96 right-[50%] grid size-full origin-top-left grid-cols-4 gap-8 transform-3d">
             {chunks.map((subarray, colIndex) => (
-              <motion.div animate={{ y: colIndex % 2 === 0 ? 100 : -100 }} transition={{ duration: colIndex % 2 === 0 ? 10 : 15, repeat: Infinity, repeatType: "reverse" }} key={colIndex + "marquee"} className="flex flex-col items-start gap-8">
+              <motion.div 
+                animate={{ y: colIndex % 2 === 0 ? 100 : -100 }} 
+                transition={{ duration: colIndex % 2 === 0 ? 10 : 15, repeat: Infinity, repeatType: "reverse" }} 
+                key={colIndex + "marquee"} 
+                className="flex flex-col items-start gap-8 will-change-transform"
+              >
                 <GridLineVertical className="-left-4" offset="80px" />
                 {subarray.map((image, imageIndex) => (
                   <div className="relative" key={imageIndex + image}>

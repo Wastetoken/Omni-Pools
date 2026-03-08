@@ -31,7 +31,7 @@ export const HeroParallax = ({
     offset: ["start start", "end start"],
   })
 
-  const springConfig = { stiffness: 300, damping: 30, bounce: 0 }
+  const springConfig = { stiffness: 400, damping: 50, bounce: 0 }
 
   const translateX = useSpring(
     useTransform(scrollYProgress, [0, 1], [0, 1000]),
@@ -60,7 +60,7 @@ export const HeroParallax = ({
   return (
     <div
       ref={ref}
-      className="h-[300vh] py-20 md:py-40 overflow-hidden antialiased relative flex flex-col self-auto [perspective:1000px] [transform-style:preserve-3d]"
+      className="h-[200vh] py-20 md:py-40 overflow-hidden antialiased relative flex flex-col self-auto [perspective:1000px] [transform-style:preserve-3d]"
     >
       <Header title={title} subtitle={subtitle} />
       <motion.div
@@ -70,11 +70,11 @@ export const HeroParallax = ({
           translateY,
           opacity,
         }}
-        className=""
+        className="will-change-transform"
       >
         <motion.div 
           style={{ x: translateX }}
-          className="flex flex-row-reverse space-x-reverse space-x-20 mb-20"
+          className="flex flex-row-reverse space-x-reverse space-x-20 mb-20 will-change-transform"
         >
           {firstRow.map((product) => (
             <ProductCard
@@ -85,7 +85,7 @@ export const HeroParallax = ({
         </motion.div>
         <motion.div 
           style={{ x: translateXReverse }}
-          className="flex flex-row mb-20 space-x-20"
+          className="flex flex-row mb-20 space-x-20 will-change-transform"
         >
           {secondRow.map((product) => (
             <ProductCard
@@ -96,7 +96,7 @@ export const HeroParallax = ({
         </motion.div>
         <motion.div 
           style={{ x: translateX }}
-          className="flex flex-row-reverse space-x-reverse space-x-20"
+          className="flex flex-row-reverse space-x-reverse space-x-20 will-change-transform"
         >
           {thirdRow.map((product) => (
             <ProductCard
@@ -136,7 +136,7 @@ export const ProductCard = ({
   return (
     <div
       key={product.title}
-      className="group/product h-96 w-[30rem] relative shrink-0"
+      className="group/product h-96 w-[30rem] relative shrink-0 will-change-transform"
     >
       <a
         href={product.link}

@@ -19,11 +19,21 @@
   --text: var(--color-navy);
 }
 
+html {
+  backface-visibility: hidden;
+}
+
 body {
   background-color: var(--bg);
   color: var(--text);
   overflow-x: hidden;
   font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+canvas {
+  backface-visibility: hidden;
 }
 
 .serif-italic {
@@ -100,11 +110,20 @@ html.lenis, html.lenis body {
   overflow: hidden;
   white-space: nowrap;
   display: flex;
+  contain: strict;
 }
 
 .marquee-content {
   display: flex;
   flex-shrink: 0;
+  will-change: transform;
+}
+
+/* Section Optimization */
+section {
+  contain: layout style paint;
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 1000px; /* Placeholder size to prevent layout shift */
 }
 
 /* Blur Reveal */
